@@ -734,6 +734,7 @@
     }
 
     resultsEl.innerHTML = "";
+    document.documentElement.classList.toggle("is-group-open", !!state.openGroup);
     groupsEl.hidden = false;
     groupsEl.innerHTML = cat.groups.map(function (g) {
       const body = g.collections.map(function (c) {
@@ -764,6 +765,7 @@
       } else if (Jijin.state.openGroup === d.getAttribute("data-group")) {
         Jijin.state.openGroup = null;
       }
+      document.documentElement.classList.toggle("is-group-open", !!Jijin.state.openGroup);
     }, true);
 
     Jijin.startClock({ clock: document.getElementById("clock"), date: document.getElementById("date") });
