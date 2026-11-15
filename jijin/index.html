@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>集锦</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#search">跳到搜索</a>
+  <header class="top">
+    <div class="now">
+      <div class="clock" id="clock"></div>
+      <div class="date" id="date"></div>
+    </div>
+    <h1 class="wordmark">集锦</h1>
+    <button type="button" class="theme" id="theme" aria-label="切换外观">
+      <span class="theme-icon" aria-hidden="true"></span>
+    </button>
+  </header>
+
+  <main>
+    <form id="search-form" class="search-form" role="search">
+      <label class="visually-hidden" for="search">搜索收藏或网页</label>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M16.3 16.3 21 21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <input id="search" type="search" placeholder="搜索收藏，或选择引擎后回车检索网页" autocomplete="off" spellcheck="false" autofocus>
+        <kbd class="hint">/</kbd>
+      </div>
+      <div class="engines" role="tablist" aria-label="搜索范围">
+        <button type="button" role="tab" data-engine="library" aria-selected="true">收藏</button>
+        <button type="button" role="tab" data-engine="bing" aria-selected="false">必应</button>
+        <button type="button" role="tab" data-engine="google" aria-selected="false">谷歌</button>
+        <button type="button" role="tab" data-engine="scholar" aria-selected="false">学术</button>
+      </div>
+    </form>
+
+    <nav class="groups" id="groups" aria-label="分类"></nav>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div id="content"></div>
+  </main>
+
+  <footer class="foot" id="footer"></footer>
+  <script src="app.js"></script>
+</body>
+</html>
