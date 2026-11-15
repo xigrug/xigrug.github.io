@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>收藏夹</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="visually-hidden" href="#search">跳到搜索</a>
+  <div class="hero">
+    <h1 class="wordmark">收藏夹 <a class="sister-link" href="https://xigrug.github.io/jijin/">集锦</a></h1>
+    <div class="clock" id="clock"></div>
+    <div class="date" id="date"></div>
+    <form id="search-form" class="search-form" role="search">
+      <label class="visually-hidden" for="search">搜索收藏或网页</label>
+      <input id="search" type="search" placeholder="搜索收藏，或选择引擎后回车" autocomplete="off" spellcheck="false">
+      <div class="engines" id="engines" role="tablist" aria-label="搜索范围">
+        <button type="button" role="tab" data-engine="library" aria-selected="true">收藏</button>
+        <button type="button" role="tab" data-engine="bing" aria-selected="false">必应</button>
+        <button type="button" role="tab" data-engine="google" aria-selected="false">谷歌</button>
+        <button type="button" role="tab" data-engine="scholar" aria-selected="false">学术</button>
+      </div>
+    </form>
+    <button type="button" id="edit-toggle" aria-pressed="false">编辑</button>
+  </div>
+
+  <section class="pins-wrap" aria-label="常用">
+    <h2 class="section-label">常用 <span class="hint">可在编辑模式改</span></h2>
+    <ul id="pins"></ul>
+    <div class="editor" id="editor">
+      <form class="editor-form" id="add-form">
+        <label class="field">
+          <span>标题</span>
+          <input id="add-title" type="text" placeholder="短名" required>
+        </label>
+        <label class="field">
+          <span>网址</span>
+          <input id="add-url" type="url" placeholder="https://" required>
+        </label>
+        <div class="editor-actions">
+          <button type="submit">添加</button>
+          <button type="button" id="reset-pins">恢复默认</button>
+          <button type="button" id="reset-featured">恢复分类展示</button>
+          <button type="button" id="export-icons">导出图标设置</button>
+          <button type="button" id="import-icons">导入图标设置</button>
+          <input id="import-icons-file" type="file" accept="application/json" hidden>
+          <span id="add-status"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div id="results"></div>
+  <nav class="cats" id="groups" aria-label="分类"></nav>
+  <p class="status" id="status"></p>
+
+  <div id="icon-popover" class="icon-popover" hidden role="dialog" aria-label="自定义图标">
+    <label class="field">
+      <span>上传文件</span>
+      <input id="icon-file" type="file" accept="image/*">
+    </label>
+    <label class="field">
+      <span>在线文件</span>
+      <input id="icon-url" type="url" placeholder="https://">
+    </label>
+    <div class="popover-actions">
+      <button type="button" id="icon-apply">确定</button>
+      <button type="button" id="icon-reset">恢复默认</button>
+    </div>
+    <p class="popover-status" id="icon-status"></p>
+  </div>
+
+  <!--
+    手动编辑三处名单与本机存储：
+    1) DEFAULT_PINS：页顶常用图标。改完刷新即可。若已在页面里点过「编辑」，
+       以 localStorage（键名 navpage-pins）为准，可用「恢复默认」清掉。
+    2) FEATURED：每个分类先露出的 2 个常用网页，写在 featured.js，也可在本文件
+       之后覆盖 window.FEATURED。可用「编辑」在列表里改，或以 localStorage
+       （键名 navpage-featured）为准，可用「恢复分类展示」清掉。
+    3) 自定义图标：编辑模式下点击图标或「图标」，可上传本地图片或填写在线
+       图片地址。覆盖项存在本机 IndexedDB（库名 / 表名 navpage-icons），
+       也可用「导出图标设置 / 导入图标设置」迁移。不会写入本仓库。
+  -->
+  <script>
+    window.DEFAULT_PINS = [
+      { title: "GitHub", url: "https://github.com/" },
+      { title: "126邮箱", url: "https://mail.126.com/" },
+      { title: "ScienceDirect", url: "https://www.sciencedirect.com/" },
+      { title: "Google", url: "https://www.google.com.hk/" },
+      { title: "必应", url: "https://cn.bing.com/" },
+      { title: "Wiley", url: "https://agupubs.onlinelibrary.wiley.com/" },
+      { title: "ChatGPT", url: "https://chatgpt.com/" },
+      { title: "Gmail", url: "https://mail.google.com/" },
+      { title: "Colab", url: "https://colab.research.google.com/" },
+      { title: "MCV 论坛", url: "https://forum.mcv-model.org/" },
+      { title: "集锦", url: "https://xigrug.github.io/jijin/" },
+      { title: "TradingView", url: "https://cn.tradingview.com/" }
+    ];
+  </script>
+  <script src="featured.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
