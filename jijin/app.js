@@ -516,20 +516,162 @@
     );
   }
 
-  function itemHtml(item) {
+  const FEATURED_KEY = "jijin-featured";
+  const FEATURED_LIMIT = 2;
+
+  function loadFeaturedMap() {
+    try {
+      const raw = localStorage.getItem(FEATURED_KEY);
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (obj && typeof obj === "object") return obj;
+      }
+    } catch (err) {}
+    return {};
+  }
+
+  function saveFeaturedMap(map) {
+    localStorage.setItem(FEATURED_KEY, JSON.stringify(map));
+  }
+
+  function bareHost(value) {
+    return String(value || "").replace(/^www\./, "").toLowerCase();
+  }
+
+  function matchesFeaturedKey(item, key) {
+    if (!key) return false;
+    const url = typeof key === "string" ? key : key.url;
+    const title = typeof key === "string" ? "" : (key.title || "");
+    if (url) {
+      try {
+        const kh = bareHost(new URL(url).hostname);
+        const ih = bareHost(hostOf(item.url));
+        if (kh && ih && (ih === kh || ih.endsWith("." + kh) || kh.endsWith("." + ih))) return true;
+      } catch (err) {
+        if (bareHost(hostOf(item.url)).indexOf(bareHost(url)) !== -1) return true;
+      }
+    }
+    if (title && String(item.title || "").indexOf(title) !== -1) return true;
+    return false;
+  }
+
+  function featuredKeysFor(name) {
+    const custom = loadFeaturedMap()[name];
+    if (Array.isArray(custom) && custom.length) return custom;
+    const defaults = (window.FEATURED || {})[name];
+    return Array.isArray(defaults) ? defaults : [];
+  }
+
+  function shortTitleFor(item, keys) {
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i];
+      if (key && typeof key === "object" && key.title && matchesFeaturedKey(item, key)) {
+        return key.title;
+      }
+    }
+    return item.title;
+  }
+
+  function isDefaultPin(item) {
+    return (window.DEFAULT_PINS || []).some(function (p) {
+      try {
+        const ph = bareHost(new URL(p.url).hostname);
+        const ih = bareHost(hostOf(item.url));
+        return ph && ih && (ih === ph || ih.endsWith("." + ph) || ph.endsWith("." + ih));
+      } catch (err) {
+        return false;
+      }
+    });
+  }
+
+  function splitCollection(collection) {
+    const keys = featuredKeysFor(collection.name);
+    const featured = [];
+    const used = {};
+    function take(pred) {
+      collection.items.forEach(function (it) {
+        if (featured.length >= FEATURED_LIMIT) return;
+        const key = (it.url || "").replace(/\/+$/, "").toLowerCase();
+        if (used[key]) return;
+        if (pred(it)) {
+          used[key] = true;
+          featured.push(it);
+        }
+      });
+    }
+    keys.forEach(function (key) {
+      take(function (it) { return matchesFeaturedKey(it, key); });
+    });
+    take(isDefaultPin);
+    take(function () { return true; });
+    const rest = collection.items.filter(function (it) {
+      const key = (it.url || "").replace(/\/+$/, "").toLowerCase();
+      return !used[key];
+    });
+    return { featured: featured, rest: rest, keys: keys };
+  }
+
+  function setCollectionFeatured(name, url, title, on) {
+    const map = loadFeaturedMap();
+    const collection = (function () {
+      const cat = Jijin.catalog();
+      if (!cat) return null;
+      for (let i = 0; i < cat.groups.length; i++) {
+        for (let j = 0; j < cat.groups[i].collections.length; j++) {
+          if (cat.groups[i].collections[j].name === name) return cat.groups[i].collections[j];
+        }
+      }
+      return null;
+    })();
+    if (!collection) return { ok: false, error: "找不到这个分类" };
+    const split = splitCollection(collection);
+    let urls = (loadFeaturedMap()[name] && loadFeaturedMap()[name].length)
+      ? loadFeaturedMap()[name].slice()
+      : split.featured.map(function (it) { return it.url; });
+    const isOn = urls.some(function (u) { return (u.url || u) && (String(u.url || u) === url || matchesFeaturedKey({ url: url, title: title }, u)); });
+    if (on) {
+      if (isOn) return { ok: true };
+      if (urls.length >= FEATURED_LIMIT) {
+        return { ok: false, error: "这个分类已有 2 个展示项，请先取消一个" };
+      }
+      urls.push({ title: title, url: url });
+    } else {
+      urls = urls.filter(function (u) {
+        return !matchesFeaturedKey({ url: url, title: title }, u);
+      });
+    }
+    map[name] = urls;
+    saveFeaturedMap(map);
+    return { ok: true };
+  }
+
+  function resetFeatured() {
+    localStorage.removeItem(FEATURED_KEY);
+  }
+
+  function itemHtml(item, opts) {
+    opts = opts || {};
     const href = Jijin.escapeAttr(item.url);
-    const title = Jijin.escapeHtml(item.title);
+    const display = opts.displayTitle || item.title;
+    const title = Jijin.escapeHtml(display);
     const host = Jijin.escapeHtml(item.host || hostOf(item.url));
     const pinned = Jijin.isPinned(item.url);
-    const editBtn = Jijin.state.edit
-      ? '<button type="button" class="pin-btn item-pin" data-pin-toggle="' + href + '" data-pin-title="' + Jijin.escapeAttr(item.title) + '">' +
+    let editBtn = "";
+    if (Jijin.state.edit) {
+      editBtn += '<button type="button" class="pin-btn item-pin" data-pin-toggle="' + href + '" data-pin-title="' + Jijin.escapeAttr(item.title) + '">' +
         (pinned ? "取消常用" : "加入常用") +
-        "</button>"
-      : "";
+        "</button>";
+      if (opts.collection) {
+        const shown = !!opts.featured;
+        editBtn += '<button type="button" class="pin-btn item-feature" data-feature-toggle="' + (shown ? "off" : "on") + '" data-collection="' + Jijin.escapeAttr(opts.collection) + '" data-feature-url="' + href + '" data-feature-title="' + Jijin.escapeAttr(item.title) + '">' +
+          (shown ? "取消展示" : "设为展示") +
+          "</button>";
+      }
+    }
     return (
       '<li class="item' + (pinned ? " is-pinned" : "") + '">' +
         '<a class="item-link" href="' + href + '" target="_blank" rel="noopener noreferrer">' +
-          iconHtml(item.url, item.title, "icon-sm") +
+          iconHtml(item.url, display, "icon-sm") +
           '<span class="item-text">' +
             '<span class="item-title">' + title + "</span>" +
             (host ? '<small class="item-host">' + host + "</small>" : "") +
@@ -539,6 +681,32 @@
       "</li>"
     );
   }
+
+  function collectionHtml(c) {
+    const split = splitCollection(c);
+    const featuredList = '<ul class="item-list">' + split.featured.map(function (it) {
+      return itemHtml(it, {
+        collection: c.name,
+        featured: true,
+        displayTitle: shortTitleFor(it, split.keys)
+      });
+    }).join("") + "</ul>";
+    let more = "";
+    if (split.rest.length) {
+      more =
+        '<details class="more">' +
+          "<summary>其余 " + split.rest.length + " 条</summary>" +
+          '<ul class="item-list">' + split.rest.map(function (it) {
+            return itemHtml(it, { collection: c.name, featured: false });
+          }).join("") + "</ul>" +
+        "</details>";
+    }
+    return '<section class="col">' +
+      '<h3 class="col-name">' + Jijin.escapeHtml(c.name) + "  " + c.items.length + "</h3>" +
+      featuredList + more +
+      "</section>";
+  }
+
 
   function render(state) {
     const pinsEl = document.getElementById("pins");
@@ -566,11 +734,11 @@
     }
 
     resultsEl.innerHTML = "";
+    document.documentElement.classList.toggle("is-group-open", !!state.openGroup);
     groupsEl.hidden = false;
     groupsEl.innerHTML = cat.groups.map(function (g) {
       const body = g.collections.map(function (c) {
-        return '<h3 class="col-name">' + Jijin.escapeHtml(c.name) + "  " + c.items.length + "</h3>" +
-          '<ul class="item-list">' + c.items.map(itemHtml).join("") + "</ul>";
+        return collectionHtml(c);
       }).join("");
       return (
         '<details class="cat"' + (state.openGroup === g.id ? " open" : "") + ' data-group="' + g.id + '">' +
@@ -581,14 +749,14 @@
     }).join("");
     const data = window.STARTPAGE_DATA || {};
     const kind = data.includes_intranet ? "条收藏" : "条公开收藏";
-    statusEl.textContent = "共 " + cat.total + " " + kind + "。不常用的在分类里展开。";
+    statusEl.textContent = "共 " + cat.total + " " + kind + "。每个分类先列出 2 个常用链接，其余在折叠栏里。";
   }
 
   function startPage() {
     const groupsEl = document.getElementById("groups");
     groupsEl.addEventListener("toggle", function (ev) {
-      const d = ev.target.closest("details.cat");
-      if (!d) return;
+      const d = ev.target;
+      if (!d || d.classList === undefined || !d.classList.contains("cat")) return;
       if (d.open) {
         groupsEl.querySelectorAll("details.cat").forEach(function (other) {
           if (other !== d) other.open = false;
@@ -597,6 +765,7 @@
       } else if (Jijin.state.openGroup === d.getAttribute("data-group")) {
         Jijin.state.openGroup = null;
       }
+      document.documentElement.classList.toggle("is-group-open", !!Jijin.state.openGroup);
     }, true);
 
     Jijin.startClock({ clock: document.getElementById("clock"), date: document.getElementById("date") });
@@ -612,6 +781,32 @@
       addStatus: document.getElementById("add-status"),
       resetBtn: document.getElementById("reset-pins"),
       render: render
+    });
+
+    const resetFeaturedBtn = document.getElementById("reset-featured");
+    if (resetFeaturedBtn) {
+      resetFeaturedBtn.addEventListener("click", function () {
+        resetFeatured();
+        const addStatus = document.getElementById("add-status");
+        if (addStatus) addStatus.textContent = "已恢复各分类的默认展示";
+        render(Jijin.state);
+      });
+    }
+
+    document.body.addEventListener("click", function (ev) {
+      const btn = ev.target.closest("[data-feature-toggle]");
+      if (!btn) return;
+      ev.preventDefault();
+      const on = btn.getAttribute("data-feature-toggle") === "on";
+      const result = setCollectionFeatured(
+        btn.getAttribute("data-collection"),
+        btn.getAttribute("data-feature-url"),
+        btn.getAttribute("data-feature-title"),
+        on
+      );
+      const addStatus = document.getElementById("add-status");
+      if (addStatus) addStatus.textContent = result.ok ? (on ? "已设为分类展示" : "已取消分类展示") : result.error;
+      if (result.ok) render(Jijin.state);
     });
   }
 

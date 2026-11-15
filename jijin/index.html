@@ -43,6 +43,7 @@
         <div class="editor-actions">
           <button type="submit">添加</button>
           <button type="button" id="reset-pins">恢复默认</button>
+          <button type="button" id="reset-featured">恢复分类展示</button>
           <span id="add-status"></span>
         </div>
       </form>
@@ -54,9 +55,11 @@
   <p class="status" id="status"></p>
 
   <!--
-    手动编辑常用列表：改下面的 DEFAULT_PINS 后刷新即可。
-    若已在页面里点过「编辑」，浏览器会以 localStorage（键名 jijin-pins）为准；
-    可用「恢复默认」清掉本地记录，回到这个数组。
+    手动编辑两处名单：
+    1) DEFAULT_PINS：页顶常用图标。改完刷新即可。若已在页面里点过「编辑」，
+       以 localStorage（键名 jijin-pins）为准，可用「恢复默认」清掉。
+    2) FEATURED：每个分类先露出的 2 个常用网页。可用「编辑」在列表里改，
+       或以 localStorage（键名 jijin-featured）为准，可用「恢复分类展示」清掉。
   -->
   <script>
     window.DEFAULT_PINS = [
@@ -75,6 +78,65 @@
       { title: "Perplexity", url: "https://www.perplexity.ai" },
       { title: "Papers with Code", url: "https://paperswithcode.com" }
     ];
+
+    window.FEATURED = {
+      "每日学习": [
+        { title: "扇贝", url: "https://www.shanbay.com/" },
+        { title: "每日英语听力", url: "https://dict.eudic.net/" }
+      ],
+      "气象数据": [
+        { title: "热带气旋资料", url: "https://tcdata.typhoon.org.cn/" },
+        { title: "天气分析查看器", url: "https://tool.qlsmc.xyz/weatherchart" }
+      ],
+      "空气污染数据集": [
+        { title: "TAP", url: "http://tapdata.org.cn/" },
+        { title: "Earthdata", url: "https://earthdata.nasa.gov/" }
+      ],
+      "天气": [
+        { title: "Windy", url: "https://www.windy.com/" },
+        { title: "earth", url: "https://earth.nullschool.net/" }
+      ],
+      "绘图库": [
+        { title: "Pixabay", url: "https://pixabay.com/" },
+        { title: "JHEPC", url: "https://jhepc.github.io/" }
+      ],
+      "文献阅读": [
+        { title: "X-MOL", url: "https://www.x-mol.com/" },
+        { title: "ReadPaper", url: "https://readpaper.com/" }
+      ],
+      "学术搜索": [
+        { title: "百度学术", url: "https://xueshu.baidu.com/" },
+        { title: "Google 学术", url: "https://en.yaodeyo.com:92/schhp?hl=zh-CN&as_sdt=0,5" }
+      ],
+      "学术搜搜": [
+        { title: "Semantic Scholar", url: "https://www.semanticscholar.org/" },
+        { title: "地学之家", url: "http://www.geohome123.com/" }
+      ],
+      "业务站点": [
+        { title: "风云四号", url: "http://rsapp.nsmc.org.cn/geofy/" },
+        { title: "GRAPES GFS", url: "http://www.wmc-bj.net/publish/Weather-Models/GRAPES_GFS_new/2.html" }
+      ],
+      "在线工具": [
+        { title: "PearOCR", url: "https://pearocr.com/" },
+        { title: "markmap", url: "https://markmap.js.org/" }
+      ],
+      "机器学习和算法": [
+        { title: "Papers with Code", url: "https://paperswithcode.com/" },
+        { title: "力扣", url: "https://leetcode-cn.com/" }
+      ],
+      "打字练习": [
+        { title: "TypingClub", url: "https://www.typingclub.com/" },
+        { title: "打字吧", url: "http://www.daziba.cn/" }
+      ],
+      "AI写作": [
+        { title: "Connected Papers", url: "https://www.connectedpapers.com/" },
+        { title: "Jenni", url: "https://jenni.ai/" }
+      ],
+      "课程学习": [
+        { title: "MetEd", url: "https://www.meted.ucar.edu/education_training/" },
+        { title: "WRF Mesoscale", url: "https://www.meted.ucar.edu/nwp/afwa_wrf/print.htm" }
+      ]
+    };
   </script>
   <script src="app.js"></script>
 </body>
